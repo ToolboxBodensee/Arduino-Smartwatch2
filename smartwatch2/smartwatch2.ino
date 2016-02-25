@@ -128,6 +128,8 @@ void setup(void)
   tft.begin();
   tft.fillScreen(BLACK);
 
+  DDRC |= (1<<7);
+
   tft.setCursor(0,58);
   tft.setTextColor(BLUE);
   tft.setTextSize(2);
@@ -135,7 +137,7 @@ void setup(void)
 
   cli();
   ///Kein Compare; kein PWM
-  TCCR1B = 0b001;    //Prescaler 1/1 (Page 108)
+  TCCR1B = 0b011;    //Prescaler 1/1 (Page 108)
   TCCR1C = 0b000000; //Keine Waveform-Generation
   TIMSK1 = 0b1 << 0; //OVF-ISR
   TCNT1 = 0;         //Timer aus 0
@@ -164,9 +166,7 @@ void setup(void)
    /* Disable command echo from Bluefruit */
   ble.echo(false);
 
-  ble.verbose(false);  // debug info is a little annoying after this point!
-
-
+  //ble.verbose(false);  // debug info is a little annoying after this point!
 
   tft.setCursor(0,58);
   tft.setTextColor(BLUE);
@@ -225,14 +225,18 @@ void loop()
 
 
   if(!connected){
-    if(ble.isConnected())
+    if(ble.isConnected()){
       clearNotification();
-    else
+      connected = true;
+      ble.setMode(BLUEFRUIT_MODE_DATA);
+    }
+    else{
       setNotification("Please connect Watch to your Phone.");
+    }
   }
   else{
     if(ble.available()){
-
+      PORTC |= (1<<7);
 
       switch(ble.read()){
         case 'N':
@@ -242,7 +246,7 @@ void loop()
           clearNotification();
           break;
         case 'T':
-        tft.println("TEst");
+          
           cli();
           seconds = 0; 
           /*
