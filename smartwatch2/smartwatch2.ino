@@ -74,6 +74,9 @@
 #include <SPI.h>
 #include <SoftwareSerial.h>
 
+#define SETLED (PORTC|=(1<<7))
+#define CLEARLED (PORTC&=~(1<<7))
+
 /* ...hardware SPI, using SCK/MOSI/MISO hardware SPI pins and then user selected CS/IRQ/RST */
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
@@ -95,7 +98,7 @@ bool connected = false;
 //Timer-Interrupt
 ISR(TIMER1_OVF_vect)
 {
-  if(count++>120){
+  if(count++>256){
     count = 0;
     seconds++;
 
@@ -123,6 +126,7 @@ inline void clearNotification(){
   setNotification("");
 }
 
+
 void setup(void)
 {
   tft.begin();
@@ -135,12 +139,12 @@ void setup(void)
   tft.setTextSize(2);
   tft.println("Starting");
 
-  cli();
   ///Kein Compare; kein PWM
-  TCCR1B = 0b011;    //Prescaler 1/1 (Page 108)
+  cli();
+  TCCR1B = 0b011;    //Prescaler 1/64 (Page 108)
   TCCR1C = 0b000000; //Keine Waveform-Generation
   TIMSK1 = 0b1 << 0; //OVF-ISR
-  TCNT1 = 0;         //Timer aus 0
+  TCNT1 = 0;         //Timer auf 0
   sei();
 
   ble.setMode(BLUEFRUIT_MODE_COMMAND);
@@ -236,7 +240,7 @@ void loop()
   }
   else{
     if(ble.available()){
-      PORTC |= (1<<7);
+      
 
       switch(ble.read()){
         case 'N':
